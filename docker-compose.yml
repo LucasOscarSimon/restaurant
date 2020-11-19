@@ -1,0 +1,42 @@
+version: "3.4"
+
+networks:
+  restaurant:
+    driver: bridge
+
+volumes:
+  database:
+
+services:
+  db:
+    image: mcr.microsoft.com/mssql/server:2017-latest
+    hostname: "db"
+    environment:
+      - SA_PASSWORD=Pass@word
+      - ACCEPT_EULA=Y
+    deploy:
+      resources:
+        limits:
+          memory: 2G
+    volumes:
+      - database:/var/opt/mssql/data
+    ports:
+      - "1433:1433"
+    networks:
+      - restaurant
+
+  restaurantapi:
+    hostname: "restaurantapi"
+    image: restaurantapi
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Development
+      - ASPNETCORE_URLS=http://+:80
+    build:
+      context: .
+      dockerfile: src/Restaurant.API/Dockerfile
+    depends_on:
+      - db
+    ports:
+      - "5001:80"
+    networks:
+      - restaurant
